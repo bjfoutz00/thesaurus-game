@@ -1,7 +1,7 @@
 <template>
   <div id="app" class="h-screen flex flex-col">
     <div class="bg-teal-500 py-2 flex justify-between px-3">
-      <p class="text-2xl font-bold">Thesaurdle</p>
+      <p @click="$router.go()" class="text-2xl font-bold">Thesaurdle</p>
       <button @click="showInfoModal" class="p-1 rounded-lg">
         <InfoIcon :size="24" />
       </button>
@@ -11,8 +11,8 @@
       classes="bg-neutral-700 rounded-xl"
       width="80%"
       height="auto"
-      adaptive="true"
-      maxWidth="400"
+      :adaptive="true"
+      :maxWidth="400"
     >
       <div class="m-3 text-left">
         <p class="text-xl italic">

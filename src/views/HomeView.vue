@@ -14,8 +14,10 @@
             <button class="submitButton mx-1" @click="getRandomWord">
               Random
             </button>
+            <button class="submitButton mx-1 my-2" @click="toggleLdrbrds">
+              Leaderboards
+            </button>
           </div>
-          <button class="submitButton" @click="getLdrbrds">Leaderboards</button>
         </div>
       </div>
       <modal
@@ -23,24 +25,51 @@
         classes="bg-neutral-700 rounded-xl"
         width="80%"
         height="auto"
-        adaptive="true"
-        maxWidth="400"
+        :adaptive="true"
+        :maxWidth="400"
       >
         <div class="h-full flex flex-col">
           <p class="my-auto justify-center">Could not connect to the server</p>
         </div>
       </modal>
+
+      <div v-if="displayLdrbrds" class="flex flex-col">
+        <div v-if="!showFullLeaderboard">
+          <div
+            class="flex justify-between border-2 border-neutral-500 mt-3 px-3 py-1 rounded-lg hover:bg-neutral-500 hover:cursor-pointer"
+            v-for="boardHeader in leaderboards"
+            :key="boardHeader._id"
+            @click="displayFullLeaderboard(boardHeader)"
+          >
+            <p class="text-xl col-span-2 mt-1">
+              {{ boardHeader.startWord }} <ArrowForwardIcon />
+              {{ boardHeader.endWord }}
+            </p>
+            <p class="mr-2 flex-grow-0">
+              <span class="font-bold text-neutral-600 w-10 mr-2">best</span>
+              <span class="text-3xl w-10">{{ getHighScore(boardHeader) }}</span>
+            </p>
+          </div>
+        </div>
+        <div v-else>
+          <LeaderBoard :leaderboardEntry="leaderboardEntry" />
+          <button
+            class="submitButton mx-1 my-2"
+            @click="
+              playChallenge(
+                leaderboardEntry.startWord,
+                leaderboardEntry.endWord
+              )
+            "
+          >
+            Play Challenge
+          </button>
+        </div>
+      </div>
       <!-- game view -->
       <div v-if="!endWordFound && gameRunning">
         <div
-          class="
-            mb-2
-            mt-4
-            pb-2
-            flex
-            justify-between
-            border-b-2 border-neutral-300
-          "
+          class="mb-2 mt-4 pb-2 flex justify-between border-b-2 border-neutral-300"
         >
           <p class="mx-4">
             <span class="font-bold text-neutral-500">start: </span
@@ -76,14 +105,7 @@
           <input
             type="submit"
             value="Restart"
-            class="
-              bg-teal-700
-              hover:bg-teal-500 hover:cursor-pointer
-              mx-3
-              py-1
-              px-3
-              rounded-lg
-            "
+            class="bg-teal-700 hover:bg-teal-500 hover:cursor-pointer mx-3 py-1 px-3 rounded-lg"
           />
         </form>
       </div>
@@ -93,7 +115,7 @@
         <p class="bold text-xl">Score: {{ numClicks }}</p>
         <form
           v-if="!this.submittedName"
-          class="my-3"
+          class="mt-3 mb-6"
           @submit.prevent="submitToLdrbrd(playerName)"
         >
           <label class="text-left">Enter Player Name: </label>
@@ -105,30 +127,12 @@
             />
             <input
               type="submit"
-              class="
-                bg-neutral-600
-                px-3
-                mx-2
-                py-1
-                text-gray-100
-                rounded-lg
-                font-semibold
-              "
+              class="bg-neutral-600 px-3 mx-2 py-1 text-gray-100 rounded-lg font-semibold"
             />
           </div>
         </form>
-        <p class="text-2xl">Leaderboard</p>
-        <ol class="list-decimal divide-y">
-          <li v-for="player in leaderboard" :key="player.name">
-            <div class="flex flex-row justify-between py-1">
-              <span>{{ player.name }}</span> <span>{{ player.score }}</span>
-            </div>
-          </li>
-        </ol>
-        <p v-if="players.length === 0" class="italic text-neutral-400">
-          No one is on the leaderboard for this challenge yet...you could be the
-          first!
-        </p>
+        <LeaderBoard :leaderboardEntry="leaderboardEntry" />
+        <button class="submitButton" @click="homeReset">Back Home</button>
       </div>
     </div>
   </div>
@@ -136,6 +140,7 @@
 
 <script>
 import LeaderBoard from "../components/LeaderBoard.vue";
+import ArrowForwardIcon from "vue-material-design-icons/ArrowRight.vue";
 
 export default {
   name: "HomeView",
@@ -150,32 +155,32 @@ export default {
       endWordFound: false,
       numClicks: 0,
       submittedName: false,
-      players: [
-        { name: "shreklvr", score: 1 },
-        { name: "jrdblck", score: 9000 },
-        { name: "QueenOfEngland", score: 15 },
-      ],
+      leaderboardEntry: Object,
       displayLdrbrds: false,
       leaderboards: {},
+      showFullLeaderboard: false,
     };
   },
   components: {
     LeaderBoard,
+    ArrowForwardIcon,
   },
   computed: {
-    leaderboard() {
-      let leaderboard = this.players;
-      return leaderboard.sort((a, b) => {
-        return a.score - b.score;
-      });
-    },
     sortedSynonyms() {
       let synArr = Array.from(this.synonyms);
       return synArr.sort();
     },
   },
   methods: {
+    homeReset() {
+      this.gameRunning = false;
+      this.endWordFound = false;
+      this.displayLdrbrds = false;
+      this.startWord = "";
+      this.endWord = "";
+    },
     async startGame() {
+      this.displayLdrbrds = false;
       await this.getSynonyms(this.startWord);
       this.gameRunning = true;
       this.numClicks = 0;
@@ -186,6 +191,20 @@ export default {
       this.startWord = "";
       this.endWord = "";
       this.currentWord = "";
+    },
+    playChallenge(startWord, endWord) {
+      this.showFullLeaderboard = false;
+
+      this.startWord = startWord;
+      this.endWord = endWord;
+      this.startGame();
+    },
+    toggleLdrbrds() {
+      this.showFullLeaderboard = false;
+      this.displayLdrbrds = true;
+      if (this.displayLdrbrds) {
+        this.getLdrbrds();
+      }
     },
     getLdrbrds() {
       const url = `http://localhost:3000/allLeaderboards`;
@@ -203,7 +222,20 @@ export default {
         });
       this.displayLdrbrds = true;
     },
+    displayFullLeaderboard(leaderboard) {
+      this.leaderboardEntry = leaderboard;
+      this.showFullLeaderboard = true;
+    },
+    getHighScore(leaderboard) {
+      if (leaderboard.users.length === 0) {
+        return "?";
+      }
+      return leaderboard.users.reduce((prev, curr) => {
+        return curr.score < prev.score ? curr : prev;
+      }).score;
+    },
     submitToLdrbrd(playerName) {
+      if (playerName === "") return;
       this.submittedName = true;
       const url = `http://localhost:3000/addUserScore`;
       fetch(url, {
@@ -223,7 +255,7 @@ export default {
           return response.json();
         })
         .then((data) => {
-          this.players = data.users;
+          this.leaderboardEntry = data;
         });
     },
     async getSynonyms(word) {
@@ -277,7 +309,7 @@ export default {
         })
         .then((data) => {
           console.log("got the players");
-          this.players = data.users;
+          this.leaderboardEntry = data;
         });
     },
     updateCurrentWord(newWord) {
@@ -318,3 +350,9 @@ export default {
   },
 };
 </script>
+
+<style>
+svg {
+  display: inline !important;
+}
+</style>
