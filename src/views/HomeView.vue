@@ -1,18 +1,13 @@
 <template>
-  <div class="bg-neutral-800 text-white">
+  <div class="m-auto">
     <!-- pre-game view -->
     <div v-if="!gameRunning">
-      <form class="pt-4 flex flex-col" @submit.prevent="startGame()">
-        <div class="flex">
-          <label class="">Enter start word: </label>
-          <input class="inputText" type="text" v-model="startWord" />
-        </div>
-        <div class="flex">
-          <label class="">Enter end word: </label>
-          <input class="inputText" type="text" v-model="endWord" />
-        </div>
-        <input class="ml-4 submitButton" type="submit" value="START" />
-      </form>
+      <div>
+        <button class="submitButton" @click="getDailyChallenge">
+          Daily Challenge
+        </button>
+        <button class="submitButton" @click="getRandomWord">Random</button>
+      </div>
       <div class="mx-10 mt-10">
         <p>Your goal: Get from the start word to the end word.</p>
         <p>
@@ -26,8 +21,8 @@
     <!-- game view -->
     <div v-if="!endWordFound && gameRunning">
       <div>
-        <span>Start word: {{ startWord }}</span>
-        <span>End word: {{ endWord }}</span>
+        <span class="mx-4">Start word: {{ startWord }}</span>
+        <span class="mx-4">End word: {{ endWord }}</span>
         <p>Current word: {{ currentWord }}</p>
       </div>
       <p>
@@ -35,6 +30,7 @@
           @click.prevent="getSynonyms(word)"
           v-for="word in sortedSynonyms"
           :key="word"
+          class="wordButton"
         >
           {{ word }}
         </button>
@@ -49,19 +45,38 @@
 
     <!-- post-game view -->
     <div v-if="endWordFound">
-      <h1>CONGRATULATIONS</h1>
-      <p>Score: {{ numClicks }}</p>
-      <form @submit.prevent="submitToLdrbrd(playerName)">
-        <label>Enter Player Name: </label>
-        <input type="text" v-model="playerName" />
-        <input type="submit" />
+      <h1 class="text-4xl italic">You win!</h1>
+      <p class="bold text-xl">Score: {{ numClicks }}</p>
+      <form
+        v-if="!this.submittedName"
+        class="my-3"
+        @submit.prevent="submitToLdrbrd(playerName)"
+      >
+        <label class="text-left">Enter Player Name: </label>
+        <div>
+          <input
+            class="py-[0.2rem] px-1 rounded-lg text-black"
+            type="text"
+            v-model="playerName"
+          />
+          <input
+            type="submit"
+            class="bg-neutral-600 px-3 mx-2 py-1 text-gray-100 rounded-lg font-semibold"
+          />
+        </div>
       </form>
-      <p>Leaderboard</p>
-      <ol>
-        <li v-for="player in leaderboard" :key="player">
-          {{ player.name }}: {{ player.score }}
+      <p class="text-2xl">Leaderboard</p>
+      <ol class="list-decimal divide-y">
+        <li v-for="player in leaderboard" :key="player.name">
+          <div class="flex flex-row justify-between py-1">
+            <span>{{ player.name }}</span> <span>{{ player.score }}</span>
+          </div>
         </li>
       </ol>
+      <p v-if="players.length === 0" class="italic text-neutral-400">
+        No one is on the leaderboard for this challenge yet...you could be the
+        first!
+      </p>
     </div>
   </div>
 </template>
@@ -79,6 +94,7 @@ export default {
       gameRunning: false,
       endWordFound: false,
       numClicks: 0,
+      submittedName: false,
       players: [
         { name: "shreklvr", score: 1 },
         { name: "jrdblck", score: 9000 },
@@ -94,13 +110,14 @@ export default {
       });
     },
     sortedSynonyms() {
-      return Array.from(this.synonyms).sort();
+      let synArr = Array.from(this.synonyms);
+      return synArr.sort();
     },
   },
   methods: {
     async startGame() {
-      this.gameRunning = true;
       await this.getSynonyms(this.startWord);
+      this.gameRunning = true;
       this.numClicks = 0;
     },
     newGame() {
@@ -111,13 +128,35 @@ export default {
       this.currentWord = "";
     },
     submitToLdrbrd(playerName) {
-      this.players.push({ name: playerName, score: this.numClicks });
+      this.submittedName = true;
+      const url = `http://localhost:3000/addUserScore`;
+      fetch(url, {
+        method: "POST",
+        headers: {
+          Accept: "application/json, text/plain, */*",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          startWord: this.startWord,
+          endWord: this.endWord,
+          username: playerName,
+          score: this.numClicks,
+        }),
+      })
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          this.players = data.users;
+        });
     },
     async getSynonyms(word) {
       this.numClicks++;
       this.currentWord = word;
       if (word === this.endWord) {
         this.endWordFound = true;
+        this.submittedName = false;
+        this.loadLeaderboard();
         return;
       }
       const apiKey = "b559bc247d182feed8e5e15a4a035230";
@@ -130,69 +169,75 @@ export default {
         .then((data) => {
           this.synonyms = new Set();
           console.log(data);
-          Object.keys(data).forEach((wordType) => {
-            if (data[wordType].syn) {
-              data[wordType].syn.forEach((word) => {
-                this.synonyms.add(word);
-              });
-            }
+          let wordType = "adjective";
 
-            if (data[wordType].sim) {
-              data[wordType].sim.forEach((word) => {
-                this.synonyms.add(word);
-              });
-            }
-            if (data[wordType].rel) {
-              data[wordType].rel.forEach((word) => {
-                this.synonyms.add(word);
-              });
-            }
-          });
+          if (data[wordType].syn) {
+            data[wordType].syn.forEach((word) => {
+              this.synonyms.add(word);
+            });
+          }
+
+          if (data[wordType].sim) {
+            data[wordType].sim.forEach((word) => {
+              this.synonyms.add(word);
+            });
+          }
+          if (data[wordType].rel) {
+            data[wordType].rel.forEach((word) => {
+              this.synonyms.add(word);
+            });
+          }
+
           console.log(this.synonyms);
         });
     },
-    // async getSynonyms() {
-    //   const apiKey = "02faeac6-c0bc-4910-a555-88dbd7edca6c";
-    //   const url = `https://www.dictionaryapi.com/api/v3/references/thesaurus/json/${this.currentWord}?key=${apiKey}`;
-    //   let response = await fetch(url);
-    //   let data = await response.json();
-    //   let copiedData = [...data];
-    //   console.log(Array.isArray(data));
-    //   console.log(data);
-    //   this.synonyms = [];
-    //   copiedData.forEach((item) => {
-    //     let syn_list = item.def[0].sseq[0][0][1].syn_list;
-    //     let rel_list = item.def[0].sseq[0][0][1].rel_list;
-
-    //     for (let list of syn_list) {
-    //       for (let wd_obj of list) {
-    //         for (let word of Object.values(wd_obj)) {
-    //           this.synonyms.push(word);
-    //         }
-    //       }
-    //     }
-    //     for (let list of rel_list) {
-    //       for (let wd_obj of list) {
-    //         for (let word of Object.values(wd_obj)) {
-    //           this.synonyms.push(word);
-    //         }
-    //       }
-    //     }
-
-    //     console.log(this.synonyms);
-    //   });
-    // },
-
+    loadLeaderboard() {
+      const url = `http://localhost:3000/getEntry/${this.startWord}/${this.endWord}`;
+      fetch(url, {
+        method: "GET",
+      })
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          console.log("got the players");
+          this.players = data.users;
+        });
+    },
     updateCurrentWord(newWord) {
       this.currentWord = newWord;
     },
-    getStartWord(value) {
-      console.log(value);
-      this.startWord = value;
+    getDailyChallenge() {
+      const url = "http://localhost:3000/getDaily";
+      fetch(url)
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          this.startWord = data.word;
+          this.endWord = data.antonym;
+          this.startGame();
+        });
     },
-    getEndWord(value) {
-      console.log(value);
-      this.endWord = value;
+    getRandomWord() {},
+    shuffle(array) {
+      let currentIndex = array.length,
+        randomIndex;
+
+      // While there remain elements to shuffle...
+      while (currentIndex != 0) {
+        // Pick a remaining element...
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+
+        // And swap it with the current element.
+        [array[currentIndex], array[randomIndex]] = [
+          array[randomIndex],
+          array[currentIndex],
+        ];
+      }
+
+      return array;
     },
   },
 };
