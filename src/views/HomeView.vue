@@ -15,6 +15,7 @@
               Random
             </button>
           </div>
+          <button class="submitButton" @click="getLdrbrds">Leaderboards</button>
         </div>
       </div>
       <modal
@@ -32,7 +33,14 @@
       <!-- game view -->
       <div v-if="!endWordFound && gameRunning">
         <div
-          class="mb-2 mt-4 pb-2 flex justify-between border-b-2 border-neutral-300"
+          class="
+            mb-2
+            mt-4
+            pb-2
+            flex
+            justify-between
+            border-b-2 border-neutral-300
+          "
         >
           <p class="mx-4">
             <span class="font-bold text-neutral-500">start: </span
@@ -68,7 +76,14 @@
           <input
             type="submit"
             value="Restart"
-            class="bg-teal-700 hover:bg-teal-500 hover:cursor-pointer mx-3 py-1 px-3 rounded-lg"
+            class="
+              bg-teal-700
+              hover:bg-teal-500 hover:cursor-pointer
+              mx-3
+              py-1
+              px-3
+              rounded-lg
+            "
           />
         </form>
       </div>
@@ -90,7 +105,15 @@
             />
             <input
               type="submit"
-              class="bg-neutral-600 px-3 mx-2 py-1 text-gray-100 rounded-lg font-semibold"
+              class="
+                bg-neutral-600
+                px-3
+                mx-2
+                py-1
+                text-gray-100
+                rounded-lg
+                font-semibold
+              "
             />
           </div>
         </form>
@@ -112,6 +135,8 @@
 </template>
 
 <script>
+import LeaderBoard from "../components/LeaderBoard.vue";
+
 export default {
   name: "HomeView",
   data() {
@@ -130,9 +155,13 @@ export default {
         { name: "jrdblck", score: 9000 },
         { name: "QueenOfEngland", score: 15 },
       ],
+      displayLdrbrds: false,
+      leaderboards: {},
     };
   },
-
+  components: {
+    LeaderBoard,
+  },
   computed: {
     leaderboard() {
       let leaderboard = this.players;
@@ -157,6 +186,22 @@ export default {
       this.startWord = "";
       this.endWord = "";
       this.currentWord = "";
+    },
+    getLdrbrds() {
+      const url = `http://localhost:3000/allLeaderboards`;
+      fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+        .then((response) => {
+          return response.json();
+        })
+        .then((data) => {
+          this.leaderboards = data;
+        });
+      this.displayLdrbrds = true;
     },
     submitToLdrbrd(playerName) {
       this.submittedName = true;
