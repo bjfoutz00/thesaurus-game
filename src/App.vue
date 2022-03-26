@@ -1,7 +1,9 @@
 <template>
   <div id="app" class="h-screen flex flex-col">
     <div class="bg-teal-500 py-2 flex justify-between px-3">
-      <p @click="$router.go()" class="text-2xl font-bold">Thesaurdle</p>
+      <p @click="$router.go()" class="text-2xl font-bold hover:cursor-pointer">
+        Thesaurdle
+      </p>
       <button @click="showInfoModal" class="p-1 rounded-lg">
         <InfoIcon :size="24" />
       </button>
