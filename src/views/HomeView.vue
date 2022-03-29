@@ -207,7 +207,7 @@ export default {
       }
     },
     getLdrbrds() {
-      const url = `http://localhost:3000/allLeaderboards`;
+      const url = `/api/allLeaderboards`;
       fetch(url, {
         method: "GET",
         headers: {
@@ -237,7 +237,7 @@ export default {
     submitToLdrbrd(playerName) {
       if (playerName === "") return;
       this.submittedName = true;
-      const url = `http://localhost:3000/addUserScore`;
+      const url = `/api/addUserScore`;
       fetch(url, {
         method: "POST",
         headers: {
@@ -300,7 +300,7 @@ export default {
         });
     },
     loadLeaderboard() {
-      const url = `http://localhost:3000/getEntry/${this.startWord}/${this.endWord}`;
+      const url = `/api/getEntry/${this.startWord}/${this.endWord}`;
       fetch(url, {
         method: "GET",
       })
@@ -316,7 +316,7 @@ export default {
       this.currentWord = newWord;
     },
     getDailyChallenge() {
-      const url = "http://localhost:3000/getDaily";
+      const url = `/api/getDaily`;
       fetch(url)
         .then((response) => {
           return response.json();
@@ -332,7 +332,7 @@ export default {
         });
     },
     getRandomWord() {
-      const url = "http://localhost:3000/getRandom";
+      const url = `/api/getRandom`;
       fetch(url)
         .then((response) => {
           return response.json();
