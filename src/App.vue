@@ -18,7 +18,7 @@
     >
       <div class="m-3 text-left">
         <p class="text-xl italic">
-          Get to the antonym in as few steps as possible
+          Get to the antonym in as few steps as possible.
         </p>
         <p class="mt-3">
           Only the synonyms of the current word will be displayed. Clicking on a
@@ -27,7 +27,21 @@
         </p>
       </div>
     </modal>
-    <router-view />
+    <router-view class="mb-auto w-[100%]" />
+    <div class="grid grid-cols-4 border-t-slate-300 border-t-2 py-1.5">
+      <span class="font-medium">BJ Foutz</span>
+      <a
+        class="font-semibold underline"
+        href="https://github.com/bjfoutz00/thesaurus-game.git"
+        >Github: Front End</a
+      >
+      <a
+        class="font-semibold underline"
+        href="https://github.com/jaredblack/thesaurus-backend.git"
+        >Github: Back End</a
+      >
+      <span class="font-medium">Jared Black</span>
+    </div>
   </div>
 </template>
 
