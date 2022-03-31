@@ -5,7 +5,7 @@
       {{ leaderboardEntry.startWord }} &#10142; {{ leaderboardEntry.endWord }}
     </p>
     <ol class="list-decimal divide-y">
-      <li v-for="player in leaderboardEntry.users" :key="player.name">
+      <li v-for="player in leaderboardEntry.users" :key="tryId(player)">
         <div class="flex flex-row justify-between py-1">
           <span>{{ player.name }}</span> <span>{{ player.score }}</span>
         </div>
@@ -30,6 +30,15 @@ export default {
         });
       }
       return [];
+    },
+  },
+  methods: {
+    tryId(player) {
+      if (player.id) {
+        return player.id;
+      } else {
+        return player.name;
+      }
     },
   },
   props: {

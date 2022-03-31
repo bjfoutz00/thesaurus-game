@@ -10,13 +10,12 @@
     </div>
     <modal
       name="infoModal"
-      classes="bg-neutral-700 rounded-xl"
       width="80%"
       height="auto"
       :adaptive="true"
       :maxWidth="400"
     >
-      <div class="m-3 text-left">
+      <div class="m-3 text-left text-black">
         <p class="text-xl italic">
           Get to the antonym in as few steps as possible.
         </p>
